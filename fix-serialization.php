@@ -134,4 +134,5 @@ try {
 }
 catch (Exception $e) {
   echo "ERROR: " . trim($e->getMessage()) . "\n";
+  exit(1);
 }
