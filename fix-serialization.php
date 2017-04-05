@@ -46,13 +46,27 @@ function unescape_mysql($value) {
 					   $value);
 }
 
+function escape_mysql($value) {
+	return str_replace(array("\\",   "\0",  "\n",  "\r",  "\x1a", "'", '"'),
+					   array("\\\\", "\\0", "\\n", "\\r", "\Z",  "\'", '\"'),
+					   $value);
+}
 
+function preg_cb($m, $mysql) {
+  $v = isset($m[3]) ? $m[3] : '';
+  $v2 = $mysql ? unescape_mysql($v) : $v;
+  $s = trim(serialize($v2));
 
-// Fix strange behaviour if you have escaped quotes in your replacement
-function unescape_quotes($value) {
-	return str_replace('\"', '"', $value);
-}	
+  return $mysql ? escape_mysql($s) : $s;
+}
 
+function cb1_mysql($m) {
+  return preg_cb($m, true);
+}
+
+function cb2_plain($m) {
+  return preg_cb($m, false);
+}
 
 
 // Check command line arguments
@@ -65,7 +79,8 @@ if (!(isset($argv) && isset($argv[1]))) {
 } else {
 	
 	// Compose path from argument
-	$path = dirname(__FILE__).'/'.$argv[1];
+	//$path = dirname(__FILE__).'/'.$argv[1];
+	$path = $argv[1];
 	if (!file_exists($path)) {
 	
 		// Error
@@ -109,7 +124,8 @@ if (!(isset($argv) && isset($argv[1]))) {
 				$do_preg_replace = true;
 
 				// Replace serialized string values
-				$data = preg_replace('!s:(\d+):([\\\\]?"[\\\\]?"|[\\\\]?"((.*?)[^\\\\])[\\\\]?");!e', "'s:'.strlen(unescape_mysql('$3')).':\"'.unescape_quotes('$3').'\";'", $data);
+				$data = preg_replace_callback('/s:(\d+):([\\\\]"[\\\\]"|[\\\\]"((.*?)[^\\\\])[\\\\]");(?=($|[}]|[a-z]:\d+|[\'][)]))/', "cb1_mysql", $data);
+				$data = preg_replace_callback('/s:(\d+):(""|"(.*?)");(?=($|[}]|[a-z]:\d+))/', "cb2_plain", $data);
 			}
 
 			// Close file
@@ -156,6 +172,3 @@ if (!(isset($argv) && isset($argv[1]))) {
 	}
 }
 
-
-
-?>
