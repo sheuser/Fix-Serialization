@@ -100,11 +100,11 @@ try {
     throw new Exception("The file is empty or can't read contents: $path");
   }
 
-  // Data ok
+  // Data OK
 
   // Replace serialized string values
-  $data = preg_replace_callback('/s:(\d+):([\\\\]"[\\\\]"|[\\\\]"((.*?)[^\\\\])[\\\\]");(?=($|[}]|[a-z]:\d+|[\'][)]))/', "cb1_mysql", $data);
-  $data = preg_replace_callback('/s:(\d+):(""|"(.*?)");(?=($|[}]|[a-z]:\d+))/', "cb2_plain", $data);
+  $data = preg_replace_callback('/s:(\d+):([\\\\]"[\\\\]"|[\\\\]"((.*?)[^\\\\])[\\\\]");(?=($|[}]|[a-z]:[-]?\d+|[\'][)]))/sm', "cb1_mysql", $data);
+  $data = preg_replace_callback('/s:(\d+):(""|"(.*?)");(?=($|[}]|[a-z]:[-]?\d+))/sm', "cb2_plain", $data);
 
   // Close file
   fclose($fp);
@@ -115,7 +115,7 @@ try {
     throw new Exception("preg_replace returns nothing\n$preg_error");
   }
 
-  // Data Ok
+  // Data OK
 
   // And finally write data
   if (!($fp = fopen($path, 'w'))) {
